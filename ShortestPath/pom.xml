@@ -9,11 +9,10 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>PageRank</artifactId>
+    <artifactId>ShortestPath</artifactId>
     <packaging>jar</packaging>
-    <name>Just for testing</name>
+    <name>shortest path with weight</name>
     <version>1.0</version>
-
     <build>
         <plugins>
             <plugin>
@@ -22,11 +21,12 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>org.ymt.spark.graphx.pageRank.Rank</mainClass>
+                            <mainClass>org.ymt.spark.graphx.shortest.ShortestPath</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
             </plugin>
         </plugins>
     </build>
+
 </project>

@@ -9,9 +9,9 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>PageRank</artifactId>
+    <artifactId>Triangle</artifactId>
     <packaging>jar</packaging>
-    <name>Just for testing</name>
+    <name>triangle count</name>
     <version>1.0</version>
 
     <build>
@@ -22,11 +22,12 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>org.ymt.spark.graphx.pageRank.Rank</mainClass>
+                            <maninClass>org.ymt.spark.graphx.triangle.TriangleCount</maninClass>
                         </manifest>
                     </archive>
                 </configuration>
             </plugin>
         </plugins>
     </build>
+
 </project>

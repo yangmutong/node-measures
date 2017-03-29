@@ -9,9 +9,9 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>PageRank</artifactId>
+    <artifactId>SoicalCircle</artifactId>
     <packaging>jar</packaging>
-    <name>Just for testing</name>
+    <name>social circle prediction</name>
     <version>1.0</version>
 
     <build>
@@ -22,7 +22,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>org.ymt.spark.graphx.pageRank.Rank</mainClass>
+                            <mainClass>org.ymt.spark.graphx.social.SocialCircle</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
