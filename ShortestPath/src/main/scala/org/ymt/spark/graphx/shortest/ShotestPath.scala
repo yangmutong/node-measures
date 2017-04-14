@@ -21,6 +21,7 @@ object ShotestPath extends Serializable{
       Edge(5L, 6L, 8.0), Edge(5L, 7L, 9.0), Edge(6L, 7L, 11.0)))
     val myGraph = Graph(myVertices, myEdges)
     dijkstra(myGraph, 1L).vertices.map(_._2).collect
+    sc.stop()
   }
   def dijkstra[VD](g: Graph[VD, Double], origin: VertexId) = {
     var g2 = g.mapVertices((vid, vd) => (false, if (vid == origin) 0 else Double.MaxValue))

@@ -140,6 +140,12 @@
     <module>SoicalCircle</module>
     <module>ShortestPath</module>
     <module>Centrality</module>
+    <module>Degree</module>
+    <module>Betweenness</module>
+    <module>Closeness</module>
+    <module>ClusterCoef</module>
+    <module>EigenvectorCentrality</module>
+    <module>Community</module>
 </modules>
 
 <properties>
