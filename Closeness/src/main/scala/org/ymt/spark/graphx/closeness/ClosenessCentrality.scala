@@ -22,17 +22,7 @@ object ClosenessCentrality extends Serializable{
       Edge(5L, 6L, 8.0), Edge(5L, 7L, 9.0), Edge(6L, 7L, 11.0)))
     val myGraph = Graph(myVertices, myEdges)
 
-
-    // 调用
-//    val reachCount = reachableNodes(myGraph).mapVertices((vid, attr) => attr.size).cache()
-//    val count = reachCount.numVertices
-//    val result = reachCount.mapVertices((vid, attr) => {
-//      val length = shortestPathLength(myGraph, vid)
-//      if (length > 0.0 && count > 1)
-//        (attr - 1.0) / length
-//      else
-//        0.0
-//    })
+    val result = run(myGraph)
     sc.stop()
   }
 
@@ -52,26 +42,6 @@ object ClosenessCentrality extends Serializable{
 
   implicit def iterableWithAvg[T: Numeric](data: Iterable[T]): Object {def avg: Double} = new {
     def avg = average(data)
-  }
-
-
-  def reachableNodes[VD](graph: Graph[VD, Double]): Graph[List[VertexId], Double] = {
-    val reachGraph = graph.mapVertices((vid, _) => List[VertexId](vid))
-    val initialMessage = List[VertexId]()
-
-    def mergeMessage(msg1: List[VertexId], msg2: List[VertexId]): List[VertexId]  = {
-      (msg1 ++ msg2).distinct
-    }
-
-    def vertexProgram(vid: VertexId, attr: List[VertexId], msg: List[VertexId]): List[VertexId] = {
-      mergeMessage(attr, msg)
-    }
-
-    def sendMessage(edgeTriplet: EdgeTriplet[List[VertexId], Double]): Iterator[(VertexId, List[VertexId])] = {
-      Iterator((edgeTriplet.srcId, edgeTriplet.dstAttr))
-    }
-    val result = Pregel(reachGraph, initialMessage, activeDirection = EdgeDirection.In)(vertexProgram, sendMessage, mergeMessage)
-    result
   }
 
   def shortestPathLength[VD](graph: Graph[VD, Double], origin: VertexId): Double = {
