@@ -51,17 +51,17 @@ object BetweenCentrality extends Serializable{
 
   }
 
-  def calculateCoef(graph: Graph[(Double, List[VertexId], List[VertexId], Double), Double], origin: VertexId): Double = {
-    val vertexAttr = graph.vertices.filter(p => p._1 == origin).first()._2
-    val reachNodes = vertexAttr._2
-    val preNodes = vertexAttr._3
-    val delta = reachNodes.map(v => (v, 0.0)).toMap
-    val sigma = graph.vertices.filter(p => reachNodes.contains(p._1)).map(s => (s._1, s._2._4)).collect().toMap
-    reachNodes.foreach(vid => {
-      val coeff = (1.0 + delta.get(vid).get) / sigma.get(vid).get
-      preNodes.foreach(v => +)
-    })
-  }
+//  def calculateCoef(graph: Graph[(Double, List[VertexId], List[VertexId], Double), Double], origin: VertexId): Double = {
+//    val vertexAttr = graph.vertices.filter(p => p._1 == origin).first()._2
+//    val reachNodes = vertexAttr._2
+//    val preNodes = vertexAttr._3
+//    val delta = reachNodes.map(v => (v, 0.0)).toMap
+//    val sigma = graph.vertices.filter(p => reachNodes.contains(p._1)).map(s => (s._1, s._2._4)).collect().toMap
+//    reachNodes.foreach(vid => {
+//      val coeff = (1.0 + delta.get(vid).get) / sigma.get(vid).get
+//      preNodes.foreach(v => +)
+//    })
+//  }
   def reachableNodes[VD](graph: Graph[VD, Double]): Graph[List[VertexId], Double] = {
     val reachGraph = graph.mapVertices((vid, _) => List[VertexId](vid))
     val initialMessage = List[VertexId]()

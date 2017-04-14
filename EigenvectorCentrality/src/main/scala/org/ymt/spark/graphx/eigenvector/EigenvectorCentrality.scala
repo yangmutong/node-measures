@@ -51,14 +51,6 @@ object EigenvectorCentrality extends Serializable{
       if (condition < count * 0.000001)
         return result
     }
-
     result
   }
-//  def another[VD](graph: Graph[VD, Double]): Graph[Double, Double] = {
-//
-//    val count = graph.vertices.count()
-//    val initialGraph = graph.mapVertices((vid, attr) => 1.0 / count)
-//    initialGraph.triplets.groupBy()
-//
-//  }
 }

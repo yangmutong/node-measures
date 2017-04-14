@@ -3,6 +3,10 @@ package org.ymt.spark.graphx.closeness
 import org.apache.spark.{SparkConf, SparkContext}
 import org.apache.spark.graphx._
 import scala.reflect.ClassTag
+import org.apache.spark.rdd.RDD
+import scala.language.reflectiveCalls
+import scala.language.implicitConversions
+import org.ymt.spark.graphx.closeness.ShortestPathsWeighted
 /**
   * Created by yangmutong on 2017/4/8.
   */
@@ -18,25 +22,56 @@ object ClosenessCentrality extends Serializable{
       Edge(5L, 6L, 8.0), Edge(5L, 7L, 9.0), Edge(6L, 7L, 11.0)))
     val myGraph = Graph(myVertices, myEdges)
 
+
     // 调用
-    val count = myGraph.numVertices - 1.0
-    val vertices = myGraph.vertices.toLocalIterator
-    val result = vertices.map {case (vid, attr) => {
-      val length = shortestPathLength(myGraph, vid)
-      if (length == 0.0)
-        (vid, 0.0)
-      else
-        (vid, count / length)
-      }
-    }
+//    val reachCount = reachableNodes(myGraph).mapVertices((vid, attr) => attr.size).cache()
+//    val count = reachCount.numVertices
+//    val result = reachCount.mapVertices((vid, attr) => {
+//      val length = shortestPathLength(myGraph, vid)
+//      if (length > 0.0 && count > 1)
+//        (attr - 1.0) / length
+//      else
+//        0.0
+//    })
     sc.stop()
   }
 
-  // 暂不用
-  def closeness[VD](graph: Graph[VD, Double]): Graph[Double, Double] = {
-    val count = graph.numVertices - 1.0
-    val vertices = graph.vertices.toLocalIterator
-    graph.mapVertices( (vid, attr) => count / shortestPathLength(graph, vid))
+  def run[VD: ClassTag, ED: ClassTag](graph: Graph[VD, ED]): Graph[Double, ED] = {
+    val numVertices = graph.numVertices
+    Graph(ShortestPathsWeighted.run(graph, graph.vertices.map { vx => vx._1 }.collect())
+      .vertices.map {
+      vx => (vx._1, {
+        val dx = 1.0 / vx._2.values.seq.avg
+        if (dx.isNaN | dx.isNegInfinity | dx.isPosInfinity) 0.0 else dx
+      })
+    }: RDD[(VertexId, Double)], graph.edges)
+  }
+  def average[T](ts: Iterable[T])(implicit num: Numeric[T]) = {
+    num.toDouble(ts.sum) / ts.size
+  }
+
+  implicit def iterableWithAvg[T: Numeric](data: Iterable[T]): Object {def avg: Double} = new {
+    def avg = average(data)
+  }
+
+
+  def reachableNodes[VD](graph: Graph[VD, Double]): Graph[List[VertexId], Double] = {
+    val reachGraph = graph.mapVertices((vid, _) => List[VertexId](vid))
+    val initialMessage = List[VertexId]()
+
+    def mergeMessage(msg1: List[VertexId], msg2: List[VertexId]): List[VertexId]  = {
+      (msg1 ++ msg2).distinct
+    }
+
+    def vertexProgram(vid: VertexId, attr: List[VertexId], msg: List[VertexId]): List[VertexId] = {
+      mergeMessage(attr, msg)
+    }
+
+    def sendMessage(edgeTriplet: EdgeTriplet[List[VertexId], Double]): Iterator[(VertexId, List[VertexId])] = {
+      Iterator((edgeTriplet.srcId, edgeTriplet.dstAttr))
+    }
+    val result = Pregel(reachGraph, initialMessage, activeDirection = EdgeDirection.In)(vertexProgram, sendMessage, mergeMessage)
+    result
   }
 
   def shortestPathLength[VD](graph: Graph[VD, Double], origin: VertexId): Double = {
@@ -47,12 +82,8 @@ object ClosenessCentrality extends Serializable{
         Double.MaxValue
     }
 
-    // val initialMessage = 0.0
     val initialMessage = Double.MaxValue
     def vertexProgram(vid: VertexId, attr: Double, msg: Double): Double = {
-//      if (msg == 0.0)
-//        attr
-//      else
       mergeMessage(attr, msg)
     }
 
