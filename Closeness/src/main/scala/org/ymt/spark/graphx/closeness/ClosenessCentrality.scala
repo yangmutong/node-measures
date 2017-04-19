@@ -26,9 +26,9 @@ object ClosenessCentrality extends Serializable{
     sc.stop()
   }
 
-  def run[VD: ClassTag, ED: ClassTag](graph: Graph[VD, ED]): Graph[Double, ED] = {
-    val numVertices = graph.numVertices
-    Graph(ShortestPathsWeighted.run(graph, graph.vertices.map { vx => vx._1 }.collect())
+  def run[VD: ClassTag](graph: Graph[VD, Double]): Graph[Double, Double] = {
+    // val numVertices = graph.numVertices
+    Graph(ShortestPathsWeighted.runWithDist(graph, graph.vertices.map { vx => vx._1 }.collect())
       .vertices.map {
       vx => (vx._1, {
         val dx = 1.0 / vx._2.values.seq.avg
@@ -44,32 +44,32 @@ object ClosenessCentrality extends Serializable{
     def avg = average(data)
   }
 
-  def shortestPathLength[VD](graph: Graph[VD, Double], origin: VertexId): Double = {
-    val spGraph = graph.mapVertices { (vid, _) =>
-      if (vid == origin)
-        0.0
-      else
-        Double.MaxValue
-    }
-
-    val initialMessage = Double.MaxValue
-    def vertexProgram(vid: VertexId, attr: Double, msg: Double): Double = {
-      mergeMessage(attr, msg)
-    }
-
-    def sendMessage(edgeTriplet: EdgeTriplet[Double, Double]): Iterator[(VertexId, Double)] = {
-      val newAttr = edgeTriplet.attr + edgeTriplet.srcAttr
-      if (edgeTriplet.dstAttr > newAttr)
-        Iterator((edgeTriplet.dstId, newAttr))
-      else
-        Iterator.empty
-    }
-
-    def mergeMessage(msg1: Double, msg2: Double): Double = {
-      math.min(msg1, msg2)
-    }
-    val newGraph = Pregel(spGraph, initialMessage)(vertexProgram, sendMessage, mergeMessage)
-
-    newGraph.vertices.map(_._2).filter(_ < Double.MaxValue).sum()
-  }
+//  def shortestPathLength[VD](graph: Graph[VD, Double], origin: VertexId): Double = {
+//    val spGraph = graph.mapVertices { (vid, _) =>
+//      if (vid == origin)
+//        0.0
+//      else
+//        Double.MaxValue
+//    }
+//
+//    val initialMessage = Double.MaxValue
+//    def vertexProgram(vid: VertexId, attr: Double, msg: Double): Double = {
+//      mergeMessage(attr, msg)
+//    }
+//
+//    def sendMessage(edgeTriplet: EdgeTriplet[Double, Double]): Iterator[(VertexId, Double)] = {
+//      val newAttr = edgeTriplet.attr + edgeTriplet.srcAttr
+//      if (edgeTriplet.dstAttr > newAttr)
+//        Iterator((edgeTriplet.dstId, newAttr))
+//      else
+//        Iterator.empty
+//    }
+//
+//    def mergeMessage(msg1: Double, msg2: Double): Double = {
+//      math.min(msg1, msg2)
+//    }
+//    val newGraph = Pregel(spGraph, initialMessage)(vertexProgram, sendMessage, mergeMessage)
+//
+//    newGraph.vertices.map(_._2).filter(_ < Double.MaxValue).sum()
+//  }
 }

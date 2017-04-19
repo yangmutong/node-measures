@@ -17,4 +17,5 @@ object Louvain extends Serializable{
     val myGraph = Graph(myVertices, myEdges)
     sc.stop()
   }
+
 }

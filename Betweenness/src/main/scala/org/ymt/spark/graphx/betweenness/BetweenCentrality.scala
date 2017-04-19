@@ -26,44 +26,25 @@ object BetweenCentrality extends Serializable{
     val graph = Graph(myVertices, myEdges)
     sc.stop()
   }
-//  def betweenCentrality[VD](graph: Graph[VD, Double]): Graph[(Double, List[VertexId], List[(VertexId, VertexId, Double)]), Double] = {
-//    val bwGraph: Graph[(Double, List[VertexId], List[(VertexId, VertexId, Double)]), Double] =
-//      graph.mapVertices( (vid, attr) => (0.0, List[VertexId](vid), List[(VertexId, VertexId, Double)]()))
+
+//  def betweennessCentrality[VD](graph: Graph[VD, Double]): Graph[Double, Double] = {
+//    val reachGraph = reachableNodes[VD](graph)
+//    val graphIterator = reachGraph.vertices.toLocalIterator
+//    graphIterator.foreach(p => shortestPathLength(reachGraph, p._1))
 //
-//    val initialMessage = (List[VertexId](), List[(VertexId, VertexId, Double)]())
-//
-//    def vertexProgram(vid: VertexId, attr: (Double, List[VertexId], List[(VertexId, VertexId, Double)]), msg: (List[VertexId], List[(VertexId, VertexId, Double)])): (Double, List[VertexId], List[(VertexId, VertexId, Double)]) = {
-//      (attr._1, attr._2.union(msg._1).distinct, attr._3.union(msg._2).distinct)
-//    }
-//
-//    def sendMessage(edge: EdgeTriplet[(Double, List[VertexId], List[(VertexId, VertexId, Double)]), Double]): Iterator[(VertexId, (List[VertexId], List[(VertexId, VertexId, Double)]))] = {
-//      Iterator((edge.dstId, (edge.srcAttr._2.:+(edge.srcId), edge.srcAttr._3.:+(edge.srcId, edge.dstId, edge.attr))))
-//    }
-//
-//    def mergeMessage(msg1: (List[VertexId], List[(VertexId, VertexId, Double)]), msg2: (List[VertexId], List[(VertexId, VertexId, Double)])): (List[VertexId], List[(VertexId, VertexId, Double)]) = {
-//      (msg1._1.union(msg2._1), msg1._2.union(msg2._2))
-//    }
-//    Pregel(bwGraph, initialMessage, activeDirection = EdgeDirection.Out)(vertexProgram, sendMessage, mergeMessage)
 //  }
-
-  def betweennessCentrality[VD](graph: Graph[VD, Double]): Graph[Double, Double] = {
-    val reachGraph = reachableNodes[VD](graph)
-    val graphIterator = reachGraph.vertices.toLocalIterator
-    graphIterator.foreach(p => shortestPathLength(reachGraph, p._1))
-
-  }
-
-  def calculateCoef(graph: Graph[(Double, List[VertexId], List[VertexId], Double), Double], origin: VertexId): Double = {
-    val vertexAttr = graph.vertices.filter(p => p._1 == origin).first()._2
-    val reachNodes = vertexAttr._2
-    val preNodes = vertexAttr._3
-    val delta = reachNodes.map(v => (v, 0.0)).toMap
-    val sigma = graph.vertices.filter(p => reachNodes.contains(p._1)).map(s => (s._1, s._2._4)).collect().toMap
-    reachNodes.foreach(vid => {
-      val coeff = (1.0 + delta.get(vid).get) / sigma.get(vid).get
-      preNodes.foreach(v => +)
-    })
-  }
+//
+//  def calculateCoef(graph: Graph[(Double, List[VertexId], List[VertexId], Double), Double], origin: VertexId): Double = {
+//    val vertexAttr = graph.vertices.filter(p => p._1 == origin).first()._2
+//    val reachNodes = vertexAttr._2
+//    val preNodes = vertexAttr._3
+//    val delta = reachNodes.map(v => (v, 0.0)).toMap
+//    val sigma = graph.vertices.filter(p => reachNodes.contains(p._1)).map(s => (s._1, s._2._4)).collect().toMap
+//    reachNodes.foreach(vid => {
+//      val coeff = (1.0 + delta.get(vid).get) / sigma.get(vid).get
+//      preNodes.foreach(v => + )
+//    })
+//  }
   def reachableNodes[VD](graph: Graph[VD, Double]): Graph[List[VertexId], Double] = {
     val reachGraph = graph.mapVertices((vid, _) => List[VertexId](vid))
     val initialMessage = List[VertexId]()

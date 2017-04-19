@@ -45,7 +45,7 @@ object ShortestPathsWeighted extends Serializable{
                              sendMsg: EdgeTriplet[SPMap, ED] => Iterator[(VertexId, SPMap)]): Graph[SPMap, ED] = {
 
     val spGraph = graph.mapVertices { (vid, attr) =>
-      if (landmarks.contains(vid)) makeMap(vid -> 0) else makeMap()
+      if (landmarks.contains(vid)) makeMap(vid -> 0.0) else makeMap()
     }
 
     val initialMessage = makeMap()
