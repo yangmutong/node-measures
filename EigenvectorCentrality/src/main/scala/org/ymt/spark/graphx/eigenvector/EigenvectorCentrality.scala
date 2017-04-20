@@ -16,11 +16,9 @@ object EigenvectorCentrality extends Serializable{
     val numPartitions = args(2).toInt
 
     // graph loader phase
-    val graph = GraphLoader.edgeListFile(sc, inputPath).cache()
+    val graph = makeGraph(inputPath, sc)
     val g = Graph(graph.vertices.repartition(numPartitions),
-      graph.edges.map(e => {
-        if (e.srcId < e.dstId) e else new Edge(e.dstId, e.srcId, e.attr)
-    }).repartition(numPartitions)).partitionBy(PartitionStrategy.RandomVertexCut)
+      graph.edges.repartition(numPartitions)).partitionBy(PartitionStrategy.RandomVertexCut)
 
     val result = run(g)
 
@@ -28,11 +26,19 @@ object EigenvectorCentrality extends Serializable{
 
     sc.stop()
   }
+  def makeGraph[VD: ClassTag](inputPath: String, sc: SparkContext): Graph[Int, Double] = {
+    val graph = GraphLoader.edgeListFile(sc, inputPath, true)
+    val edges = sc.textFile(inputPath).map(v => {
+      val t = v.split("\t")
+      Edge(t(0).toLong, t(1).toLong, t(2).toDouble)
+    })
+    Graph(graph.vertices, edges)
+  }
   def save[VD: ClassTag, ED: ClassTag](graph: Graph[VD, ED], vertexPath: String, edegePath: String): Unit = {
     graph.vertices.saveAsTextFile(vertexPath)
     graph.vertices.saveAsTextFile(edegePath)
   }
-  def run[VD](graph: Graph[VD, Double], maxIter = 100: Int): Graph[Double, Double] = {
+  def run[VD](graph: Graph[VD, Double], maxIter: Int = 100): Graph[Double, Double] = {
     eigenvector(graph, maxIter)
   }
   def eigenvector[VD](graph: Graph[VD, Double], maxIter: Int): Graph[Double, Double] = {

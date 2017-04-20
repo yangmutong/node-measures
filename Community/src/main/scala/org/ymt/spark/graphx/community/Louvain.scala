@@ -19,15 +19,13 @@ object Louvain extends Serializable{
     val numPartitions = args(2).toInt
 
     // graph loader phase
-    val graph = GraphLoader.edgeListFile(sc, inputPath).cache()
+    val graph = makeGraph(inputPath, sc)
     val g = Graph(graph.vertices.repartition(numPartitions),
-      graph.edges.map(e => {
-        if (e.srcId < e.dstId) e else new Edge(e.dstId, e.srcId, e.attr)
-      }).repartition(numPartitions)).partitionBy(PartitionStrategy.RandomVertexCut)
+      graph.edges.repartition(numPartitions)).partitionBy(PartitionStrategy.RandomVertexCut)
 
     // computation phase
     val louvainCore = new LouvainCore
-    var louvainGraph = louvainCore.createLouvainGraph(graph.mapEdges(v => v.attr.toLong))
+    var louvainGraph = louvainCore.createLouvainGraph(g.mapEdges(v => v.attr.toLong))
 
     var compressionLevel = -1 // number of times the graph has been compressed
     var q_modularityValue = -1.0 // current modularity value
@@ -57,6 +55,14 @@ object Louvain extends Serializable{
     save(louvainGraph, outputPath + "/final_vertices", outputPath + "/final_edges")
 
     sc.stop()
+  }
+  def makeGraph[VD: ClassTag](inputPath: String, sc: SparkContext): Graph[Int, Double] = {
+    val graph = GraphLoader.edgeListFile(sc, inputPath, true)
+    val edges = sc.textFile(inputPath).map(v => {
+      val t = v.split("\t")
+      Edge(t(0).toLong, t(1).toLong, t(2).toDouble)
+    })
+    Graph(graph.vertices, edges)
   }
 
   def saveLevel(sc: SparkContext, level: Int, q: Double, graph: Graph[LouvainData, Long], outputPath: String) = {
