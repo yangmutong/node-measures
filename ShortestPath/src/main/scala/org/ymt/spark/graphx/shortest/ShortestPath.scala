@@ -18,7 +18,7 @@ object ShortestPath extends Serializable{
     val sc = new SparkContext(new SparkConf().setAppName("Shortest Path"))
     val inputPath = args(0)
     val outputPath = args(1)
-    val numPartitions = args(2)
+    val numPartitions = args(2).toInt
 
     val graph = GraphLoader.edgeListFile(sc, inputPath).cache()
     val g = Graph(graph.vertices.repartition(numPartitions),

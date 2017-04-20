@@ -22,7 +22,7 @@ object TriangleCount extends Serializable{
     val sc = new SparkContext(new SparkConf().setAppName("TriangleCount"))
     val inputPath = args(0)
     val outputPath = args(1)
-    val numPartitions = args(2)
+    val numPartitions = args(2).toInt
 
     // graph loader phase
     val graph = GraphLoader.edgeListFile(sc, inputPath).cache()
