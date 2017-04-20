@@ -6,7 +6,6 @@ import scala.reflect.ClassTag
 import org.apache.spark.rdd.RDD
 import scala.language.reflectiveCalls
 import scala.language.implicitConversions
-import org.ymt.spark.graphx.closeness.ShortestPathsWeighted
 /**
   * Created by yangmutong on 2017/4/8.
   */
