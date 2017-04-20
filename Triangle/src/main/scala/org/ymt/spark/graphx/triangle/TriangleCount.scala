@@ -9,17 +9,37 @@ import org.apache.spark.SparkContext._
 import org.apache.spark.graphx._
 import org.apache.spark.rdd.RDD
 
-object TriangleCount {
+import scala.reflect.ClassTag
+
+object TriangleCount extends Serializable{
+  /**
+    * @param args
+    *             0 dataset input path
+    *             1 result output path
+    *             2 num partitions
+    * */
   def main(args: Array[String]): Unit = {
     val sc = new SparkContext(new SparkConf().setAppName("TriangleCount"))
-    val baseUrl = "hdfs://master:8020/user/ymt/"
-    val graph = GraphLoader.edgeListFile(sc, baseUrl + "slashdot/soc-Slashdot0811.txt").cache()
-    val g2 = Graph(graph.vertices, graph.edges.map(e => {
-      if (e.srcId < e.dstId) e else new Edge(e.dstId, e.srcId, e.attr)
-    })).partitionBy(PartitionStrategy.RandomVertexCut)
+    val inputPath = args(0)
+    val outputPath = args(1)
+    val numPartitions = args(2)
 
-    (0 to 6).map(i => g2.subgraph(vpred =
-      (vid, _) => vid >= i * 10000 && vid < (i + 1) * 10000
-    ).triangleCount().vertices.map(_._2).reduce(_ + _))
+    // graph loader phase
+    val graph = GraphLoader.edgeListFile(sc, inputPath).cache()
+    val g = Graph(graph.vertices.repartition(numPartitions),
+      graph.edges.map(e => {
+        if (e.srcId < e.dstId) e else new Edge(e.dstId, e.srcId, e.attr)
+      }).repartition(numPartitions)).partitionBy(PartitionStrategy.RandomVertexCut)
+
+    val result = g.triangleCount()
+
+    save(result, outputPath + "/vertices", outputPath + "/edges")
+
+    sc.stop()
   }
+  def save[VD: ClassTag, ED: ClassTag](graph: Graph[VD, ED], vertexPath: String, edegePath: String): Unit = {
+    graph.vertices.saveAsTextFile(vertexPath)
+    graph.vertices.saveAsTextFile(edegePath)
+  }
+
 }
