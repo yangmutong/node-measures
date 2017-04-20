@@ -11,7 +11,7 @@
 
     <artifactId>PageRank</artifactId>
     <packaging>jar</packaging>
-    <name>Just for testing</name>
+    <name>calculate page rank</name>
     <version>1.0</version>
 
     <build>
