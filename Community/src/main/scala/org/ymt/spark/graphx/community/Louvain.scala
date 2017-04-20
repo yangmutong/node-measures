@@ -21,12 +21,12 @@ object Louvain extends Serializable{
       Edge(2L, 3L, 8.0), Edge(2L, 4L, 9.0), Edge(2L, 5L, 7.0),
       Edge(3L, 5L, 5.0), Edge(4L, 5L, 15.0), Edge(4L, 6L, 6.0),
       Edge(5L, 6L, 8.0), Edge(5L, 7L, 9.0), Edge(6L, 7L, 11.0)))
-    val myGraph = Graph(myVertices, myEdges)
+    val graph = Graph(myVertices, myEdges)
 
     val outputPath: String = args(0)
 
     val louvainCore = new LouvainCore
-    var louvainGraph = louvainCore.createLouvainGraph(myGraph.mapEdges(v => v.attr.toLong))
+    var louvainGraph = louvainCore.createLouvainGraph(graph.mapEdges(v => v.attr.toLong))
 
     var compressionLevel = -1 // number of times the graph has been compressed
     var q_modularityValue = -1.0 // current modularity value
@@ -44,7 +44,6 @@ object Louvain extends Serializable{
 
       // If modularity was increased by at least 0.001 compress the graph and repeat
       // halt immediately if the community labeling took less than 3 passes
-      //println(s"if ($passes > 2 && $currentQ > $q + 0.001 )")
       if (numberOfPasses > 2 && currentQModularityValue > q_modularityValue + 0.001) {
         q_modularityValue = currentQModularityValue
         louvainGraph = louvainCore.compressGraph(louvainGraph)

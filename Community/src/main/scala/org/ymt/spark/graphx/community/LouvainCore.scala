@@ -151,7 +151,6 @@ class LouvainCore extends Logging with Serializable {
       val M = totalGraphWeight.value
       val k_i = louvainData.nodeWeight + louvainData.internalWeight
       val q = (accumulatedInternalWeight.toDouble / M) - ((sigmaTot * k_i) / math.pow(M, 2))
-      //println(s"vid: $vid community: $community $q = ($k_i_in / $M) -  ( ($sigmaTot * $k_i) / math.pow($M, 2) )")
       if (q < 0)
         0
       else
@@ -169,17 +168,6 @@ class LouvainCore extends Logging with Serializable {
   /**
     * Creates the messages passed between each vertex to convey neighborhood community data.
     */
-  /*
-  private def sendCommunityData(et: EdgeTriplet[LouvainData, Long]) = {
-    if (et.dstAttr == null)
-      et.dstAttr = new LouvainData(et.dstId, 0L, 0L, 0L, false)
-    if (et.srcAttr == null)
-      et.srcAttr = new LouvainData(et.srcId, 0L, 0L, 0L, false)
-    val m1 = (et.dstId, Map((et.srcAttr.community, et.srcAttr.communitySigmaTot) -> et.attr))
-    val m2 = (et.srcId, Map((et.dstAttr.community, et.dstAttr.communitySigmaTot) -> et.attr))
-    Iterator(m1, m2)
-  }
-  */
 
   private def sendCommunityData(e: EdgeContext[LouvainData, Long, Map[(Long, Long), Long]]) = {
     val m1 = (Map((e.srcAttr.community, e.srcAttr.communitySigmaTot) -> e.attr))
@@ -218,7 +206,6 @@ class LouvainCore extends Logging with Serializable {
       var bestSigmaTot = 0L
       communityMessages.foreach({ case ((communityId, sigmaTotal), communityEdgeWeight) =>
         val deltaQ = q(startingCommunityId, communityId, sigmaTotal, communityEdgeWeight, louvainData.nodeWeight, louvainData.internalWeight, totalEdgeWeight.value)
-        //println("   communtiy: "+communityId+" sigma:"+sigmaTotal+" edgeweight:"+communityEdgeWeight+"  q:"+deltaQ)
         if (deltaQ > maxDeltaQ || (deltaQ > 0 && (deltaQ == maxDeltaQ && communityId > bestCommunity))) {
           maxDeltaQ = deltaQ
           bestCommunity = communityId
@@ -227,7 +214,6 @@ class LouvainCore extends Logging with Serializable {
       })
       // only allow changes from low to high communties on even cyces and high to low on odd cycles
       if (louvainData.community != bestCommunity && ((even && louvainData.community > bestCommunity) || (!even && louvainData.community < bestCommunity))) {
-        //println("  "+vid+" SWITCHED from "+vdata.community+" to "+bestCommunity)
         louvainData.community = bestCommunity
         louvainData.communitySigmaTot = bestSigmaTot
         louvainData.changed = true
@@ -309,10 +295,6 @@ class LouvainCore extends Logging with Serializable {
       .partitionBy(PartitionStrategy.EdgePartition2D).groupEdges(_ + _)
 
     // calculate the weighted degree of each node
-    //val nodeWeightMapFunc = (e: EdgeTriplet[LouvainData, Long]) => Iterator((e.srcId, e.attr), (e.dstId, e.attr))
-    //val nodeWeightReduceFunc = (e1: Long, e2: Long) => e1 + e2
-    //val nodeWeights = compressedGraph.mapReduceTriplets(nodeWeightMapFunc, nodeWeightReduceFunc)
-
     val nodeWeights = compressedGraph.aggregateMessages(
       (e:EdgeContext[LouvainData,Long,Long]) => {
         e.sendToSrc(e.attr)
@@ -322,7 +304,6 @@ class LouvainCore extends Logging with Serializable {
     )
 
     // fill in the weighted degree of each node
-    // val louvainGraph = compressedGraph.joinVertices(nodeWeights)((vid,data,weight)=> {
     val louvainGraph = compressedGraph.outerJoinVertices(nodeWeights)((vid, data, weightOption) => {
       val weight = weightOption.getOrElse(0L)
       data.communitySigmaTot = weight + data.internalWeight
