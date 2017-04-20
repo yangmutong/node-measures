@@ -39,7 +39,7 @@ object ShortestPathsWeighted extends Serializable{
     _run(graph, landmarks, sendMessage)
   }
 
-  def _run[VD, ED: ClassTag](graph: Graph[VD, ED],
+  def _run[VD: ClassTag, ED: ClassTag](graph: Graph[VD, ED],
                              landmarks: Seq[VertexId],
                              sendMsg: EdgeTriplet[SPMap, ED] => Iterator[(VertexId, SPMap)]): Graph[SPMap, ED] = {
     val spGraph = Graph(graph.collectNeighbors(EdgeDirection.In), graph.edges).mapVertices((vid, attr) => {
