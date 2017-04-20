@@ -8,8 +8,6 @@ import org.apache.spark.SparkContext
 import org.apache.spark.SparkConf
 import org.apache.spark.SparkContext._
 import org.apache.spark.graphx._
-import org.apache.spark.rdd.RDD
-import org.ymt.spark.graphx.shortest.ShortestPaths
 
 import scala.reflect.ClassTag
 
@@ -24,7 +22,7 @@ object ShortestPath extends Serializable{
     val g = Graph(graph.vertices.repartition(numPartitions),
       graph.edges.repartition(numPartitions)).partitionBy(PartitionStrategy.RandomVertexCut)
 
-    val result = ShortestPaths.runWithDist(g, g.vertices.map(_._1).collect().toSeq)
+    val result = org.ymt.spark.graphx.shortest.ShortestPaths.runWithDist(g, g.vertices.map(_._1).collect().toSeq)
 
     save(result, outputPath + "/vertices", outputPath + "/edges")
 
