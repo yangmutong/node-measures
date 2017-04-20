@@ -15,6 +15,8 @@ import scala.collection.immutable.HashMap
 import scala.reflect.ClassTag
 
 object BetweenCentrality extends Serializable{
+  type SPMap = Map[VertexId, (Double, List[VertexId], Double)]
+  private def makeMap(x: (VertexId, (Double, List[VertexId], Double))*) = Map(x: _*)
   def main(args: Array[String]): Unit = {
     val sc = new SparkContext(new SparkConf().setAppName("Intro"))
     val myVertices = sc.makeRDD(Array((1L, "A"), (2L, "B"), (3L, "C"),
@@ -64,12 +66,18 @@ object BetweenCentrality extends Serializable{
     result
   }
 
-  def shortestPathLength(graph: Graph[List[VertexId], Double], origin: VertexId): Graph[(Double, List[VertexId], List[VertexId], Double), Double] = {
-    val spGraph = graph.mapVertices { (vid, attr) =>
-      if (vid == origin)
-        (0.0, attr, List[VertexId](), 1.0)
+  def shortestPathLength(reach: Graph[List[VertexId], Double], origin: VertexId): Graph[SPMap, Double] = {
+    val spGraph = reach.mapVertices((vid, attr) => {
+      attr.map(v => (v, (Double.MaxValue, List[VertexId](), 0.0))).toMap
+    }).mapVertices { (vid, attr) =>
+      if (vid == origin){
+        attr.map(v => {
+          if (v._1 == origin)
+            v.
+        })
+      }
       else
-        (Double.MaxValue, attr, List[VertexId](), 0.0)
+        attr
     }
 
     val initialMessage = (Double.MaxValue, List[VertexId](), 0.0)
