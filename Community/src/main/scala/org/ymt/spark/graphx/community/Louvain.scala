@@ -14,17 +14,18 @@ object Louvain extends Serializable{
   def main(args: Array[String]): Unit = {
     val sc = new SparkContext(new SparkConf().setAppName("Louvain"))
 
+    val inputPath = args(0)
+    val outputPath = args(1)
+    val numPartitions = args(2)
 
-    val myVertices = sc.makeRDD(Array((1L, "A"), (2L, "B"), (3L, "C"),
-      (4L, "D"), (5L, "E"), (6L, "F"), (7L, "G")))
-    val myEdges = sc.makeRDD(Array(Edge(1L, 2L, 7.0), Edge(1L, 4L, 5.0),
-      Edge(2L, 3L, 8.0), Edge(2L, 4L, 9.0), Edge(2L, 5L, 7.0),
-      Edge(3L, 5L, 5.0), Edge(4L, 5L, 15.0), Edge(4L, 6L, 6.0),
-      Edge(5L, 6L, 8.0), Edge(5L, 7L, 9.0), Edge(6L, 7L, 11.0)))
-    val graph = Graph(myVertices, myEdges)
+    // graph loader phase
+    val graph = GraphLoader.edgeListFile(sc, inputPath).cache()
+    val g = Graph(graph.vertices.repartition(numPartitions),
+      graph.edges.map(e => {
+        if (e.srcId < e.dstId) e else new Edge(e.dstId, e.srcId, e.attr)
+      }).repartition(numPartitions)).partitionBy(PartitionStrategy.RandomVertexCut)
 
-    val outputPath: String = args(0)
-
+    // computation phase
     val louvainCore = new LouvainCore
     var louvainGraph = louvainCore.createLouvainGraph(graph.mapEdges(v => v.attr.toLong))
 
@@ -54,6 +55,7 @@ object Louvain extends Serializable{
 
     } while (!halt)
     save(louvainGraph, outputPath + "/final_vertices", outputPath + "/final_edges")
+
     sc.stop()
   }
 

@@ -134,7 +134,6 @@
 </prerequisites>
 
 <modules>
-    <module>Intro</module>
     <module>PageRank</module>
     <module>Triangle</module>
     <module>SoicalCircle</module>
