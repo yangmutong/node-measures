@@ -39,7 +39,7 @@ object ClusterCoef extends Serializable{
     graph.vertices.saveAsTextFile(vertexPath)
     graph.vertices.saveAsTextFile(edegePath)
   }
-  def clusterCoef[VD, ED](graph: Graph[VD, ED]): Graph[Double, ED] = {
+  def clusterCoef[VD: ClassTag, ED: ClassTag](graph: Graph[VD, ED]): Graph[Double, ED] = {
     val triangleGraph = graph.triangleCount()
     val maxTriangleGraph = graph.degrees.mapValues(d => d * (d - 1) / 2.0)
     val result = triangleGraph.vertices.innerJoin(maxTriangleGraph) {(vid, triangleCount, maxTriangle) => {
