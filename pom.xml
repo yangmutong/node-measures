@@ -135,7 +135,7 @@
 
 <modules>
     <module>Intro</module>
-    <module>pageRank</module>
+    <module>PageRank</module>
     <module>Triangle</module>
     <module>SoicalCircle</module>
     <module>ShortestPath</module>
