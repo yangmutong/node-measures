@@ -22,7 +22,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <maninClass>org.ymt.spark.graphx.triangle.TriangleCount</maninClass>
+                            <mainClass>org.ymt.spark.graphx.triangle.TriangleCount</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
