@@ -23,10 +23,6 @@ class LouvainCore extends Logging with Serializable {
     */
   def createLouvainGraph[VD: ClassTag](graph: Graph[VD, Long]): Graph[LouvainData, Long] = {
     // Create the initial Louvain graph.
-    //val nodeWeightMapFunc = (e: EdgeTriplet[VD, Long]) => Iterator((e.srcId, e.attr), (e.dstId, e.attr))
-    //val nodeWeightReduceFunc = (e1: Long, e2: Long) => e1 + e2
-    //val nodeWeights = graph.mapReduceTriplets(nodeWeightMapFunc, nodeWeightReduceFunc)
-
     val nodeWeights = graph.aggregateMessages(
       (e:EdgeContext[VD,Long,Long]) => {
         e.sendToSrc(e.attr)
