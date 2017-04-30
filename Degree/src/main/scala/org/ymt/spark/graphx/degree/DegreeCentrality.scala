@@ -31,7 +31,7 @@ object DegreeCentrality extends Serializable{
     sc.stop()
   }
 
-  def makeGraph[VD: ClassTag](inputPath: String, sc: SparkContext): Graph[VD, Double] = {
+  def makeGraph[VD: ClassTag](inputPath: String, sc: SparkContext): Graph[Int, Double] = {
     val graph = GraphLoader.edgeListFile(sc, inputPath, true)
     graph.mapEdges(v => v.attr.toDouble)
   }
