@@ -18,8 +18,7 @@ object DegreeCentrality extends Serializable{
     // graph loader phase
     val graph = makeGraph(inputPath, sc)
     val g = Graph(graph.vertices.repartition(numPartitions),
-      graph.edges.repartition(numPartitions)).partitionBy(PartitionStrategy.RandomVertexCut)
-    g.cache()
+      graph.edges.repartition(numPartitions)).partitionBy(PartitionStrategy.RandomVertexCut).cache()
 
     val in = inDegreeCentrality(g)
     val out = outDegreeCentrality(g)

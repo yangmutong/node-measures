@@ -20,7 +20,7 @@ object ShortestPath extends Serializable{
 
     val graph = makeGraph(inputPath, sc)
     val g = Graph(graph.vertices.repartition(numPartitions),
-      graph.edges.repartition(numPartitions)).partitionBy(PartitionStrategy.RandomVertexCut)
+      graph.edges.repartition(numPartitions)).partitionBy(PartitionStrategy.RandomVertexCut).cache()
 
     val result = org.ymt.spark.graphx.shortest.ShortestPaths.runWithDist(g, g.vertices.map(_._1).collect().toSeq)
 

@@ -20,7 +20,7 @@ object ClosenessCentrality extends Serializable{
     // graph loader phase
     val graph = makeGraph(inputPath, sc)
     val g = Graph(graph.vertices.repartition(numPartitions),
-      graph.edges.repartition(numPartitions)).partitionBy(PartitionStrategy.RandomVertexCut)
+      graph.edges.repartition(numPartitions)).partitionBy(PartitionStrategy.RandomVertexCut).cache()
     val result = run(g)
     save(result, outputPath + "/vertices")
     sc.stop()

@@ -21,7 +21,7 @@ object Louvain extends Serializable{
     // graph loader phase
     val graph = makeGraph(inputPath, sc)
     val g = Graph(graph.vertices.repartition(numPartitions),
-      graph.edges.repartition(numPartitions)).partitionBy(PartitionStrategy.RandomVertexCut)
+      graph.edges.repartition(numPartitions)).partitionBy(PartitionStrategy.RandomVertexCut).cache()
 
     // computation phase
     val louvainCore = new LouvainCore
