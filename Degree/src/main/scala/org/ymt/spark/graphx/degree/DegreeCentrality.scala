@@ -19,49 +19,41 @@ object DegreeCentrality extends Serializable{
     val graph = makeGraph(inputPath, sc)
     val g = Graph(graph.vertices.repartition(numPartitions),
       graph.edges.repartition(numPartitions)).partitionBy(PartitionStrategy.RandomVertexCut)
-
+    g.cache()
 
     val in = inDegreeCentrality(g)
     val out = outDegreeCentrality(g)
     val degree = degreeCentrality(g)
 
-    save(in, outputPath + "/in/vertices", outputPath + "/in/edges")
-    save(out, outputPath + "/out/vertices", outputPath + "/out/edges")
-    save(degree, outputPath + "/all/vertices", outputPath + "/all/edges")
+    save(in, outputPath + "/in/vertices")
+    save(out, outputPath + "/out/vertices")
+    save(degree, outputPath + "/all/vertices")
     sc.stop()
   }
 
-  def makeGraph[VD: ClassTag](inputPath: String, sc: SparkContext): Graph[Int, Double] = {
+  def makeGraph[VD: ClassTag](inputPath: String, sc: SparkContext): Graph[VD, Double] = {
     val graph = GraphLoader.edgeListFile(sc, inputPath, true)
-    val edges = sc.textFile(inputPath).map(v => {
-      val t = v.split("\t")
-      Edge(t(0).toLong, t(1).toLong, t(2).toDouble)
-    })
-    Graph(graph.vertices, edges)
+    graph.mapEdges(v => v.attr.toDouble)
   }
 
-  def save[VD: ClassTag, ED: ClassTag](graph: Graph[VD, ED], vertexPath: String, edegePath: String): Unit = {
-    graph.vertices.saveAsTextFile(vertexPath)
-    graph.vertices.saveAsTextFile(edegePath)
+  def save[VD: ClassTag](vertex: VertexRDD[VD], vertexPath: String): Unit = {
+    vertex.saveAsTextFile(vertexPath)
   }
-  def inDegreeCentrality[VD: ClassTag, ED: ClassTag](graph: Graph[VD, ED]): Graph[Double, ED] = {
+  def inDegreeCentrality[VD: ClassTag, ED: ClassTag](graph: Graph[VD, ED]): VertexRDD[Double] = {
     val length = graph.numVertices
     val s = 1.0 / (length - 1.0)
-    val vertices = graph.inDegrees.mapValues( (vid, value) => value * s)
-    Graph(vertices, graph.edges)
+    graph.inDegrees.mapValues( (vid, value) => value * s)
   }
 
-  def outDegreeCentrality[VD: ClassTag, ED: ClassTag](graph: Graph[VD, ED]): Graph[Double, ED] = {
+  def outDegreeCentrality[VD: ClassTag, ED: ClassTag](graph: Graph[VD, ED]): VertexRDD[Double] = {
     val length = graph.numVertices
     val s = 1.0 / (length - 1.0)
-    val vertices = graph.outDegrees.mapValues( (vid, value) => value * s)
-    Graph(vertices, graph.edges)
+    graph.outDegrees.mapValues( (vid, value) => value * s)
   }
 
-  def degreeCentrality[VD: ClassTag, ED: ClassTag](graph: Graph[VD, ED]): Graph[Double, ED] = {
+  def degreeCentrality[VD: ClassTag, ED: ClassTag](graph: Graph[VD, ED]): VertexRDD[Double] = {
     val length = graph.numVertices
     val s = 1.0 / (length - 1.0)
-    val vertices = graph.degrees.mapValues( (vid, value) => value * s)
-    Graph(vertices, graph.edges)
+    graph.degrees.mapValues( (vid, value) => value * s)
   }
 }
