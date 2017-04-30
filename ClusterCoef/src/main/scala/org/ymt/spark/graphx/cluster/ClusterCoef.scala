@@ -16,11 +16,9 @@ object ClusterCoef extends Serializable{
     val numPartitions = args(2).toInt
 
     // graph loader phase
-    val graph = makeGraph(inputPath, sc)
-    val g = Graph(graph.vertices.repartition(numPartitions),
-      graph.edges.repartition(numPartitions)).partitionBy(PartitionStrategy.RandomVertexCut).cache()
+    val graph = makeGraph(inputPath, sc).partitionBy(PartitionStrategy.RandomVertexCut).cache()
 
-    val result = clusterCoef(g)
+    val result = clusterCoef(graph)
     save(result, outputPath + "/vertices")
 
     sc.stop()
