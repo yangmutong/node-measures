@@ -58,11 +58,7 @@ object Louvain extends Serializable{
   }
   def makeGraph[VD: ClassTag](inputPath: String, sc: SparkContext): Graph[Int, Double] = {
     val graph = GraphLoader.edgeListFile(sc, inputPath, true)
-    val edges = sc.textFile(inputPath).map(v => {
-      val t = v.split("\t")
-      Edge(t(0).toLong, t(1).toLong, t(2).toDouble)
-    })
-    Graph(graph.vertices, edges)
+    graph.mapEdges(v => v.attr.toDouble)
   }
 
   def saveLevel(sc: SparkContext, level: Int, q: Double, graph: Graph[LouvainData, Long], outputPath: String) = {
