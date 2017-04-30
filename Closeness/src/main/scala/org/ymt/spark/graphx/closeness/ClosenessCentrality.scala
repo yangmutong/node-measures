@@ -12,7 +12,7 @@ import scala.language.implicitConversions
 
 object ClosenessCentrality extends Serializable{
   def main(args: Array[String]): Unit = {
-    val sc = new SparkContext(new SparkConf().setAppName("Intro"))
+    val sc = new SparkContext(new SparkConf().setAppName("Closeness Centrality"))
     val inputPath = args(0)
     val outputPath = args(1)
     val numPartitions = args(2).toInt

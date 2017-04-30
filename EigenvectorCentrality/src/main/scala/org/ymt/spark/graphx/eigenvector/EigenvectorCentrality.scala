@@ -10,7 +10,7 @@ import scala.reflect.ClassTag
 
 object EigenvectorCentrality extends Serializable{
   def main(args: Array[String]): Unit = {
-    val sc = new SparkContext(new SparkConf().setAppName("eigenvector centrality"))
+    val sc = new SparkContext(new SparkConf().setAppName("Eigenvector Centrality"))
     val inputPath = args(0)
     val outputPath = args(1)
     val numPartitions = args(2).toInt

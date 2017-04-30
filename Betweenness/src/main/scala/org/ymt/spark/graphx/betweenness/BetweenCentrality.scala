@@ -12,7 +12,7 @@ import scala.reflect.ClassTag
 
 object BetweenCentrality extends Serializable{
   def main(args: Array[String]): Unit = {
-    val sc = new SparkContext(new SparkConf().setAppName("Intro"))
+    val sc = new SparkContext(new SparkConf().setAppName("Betweenness Centrality"))
     val inputPath = args(0)
     val outputPath = args(1)
     val numPartitions = args(2).toInt

@@ -10,7 +10,7 @@ import scala.reflect.ClassTag
   */
 object ClusterCoef extends Serializable{
   def main(args: Array[String]): Unit = {
-    val sc = new SparkContext(new SparkConf().setAppName("Shortest Path"))
+    val sc = new SparkContext(new SparkConf().setAppName("Cluster Coefficient"))
     val inputPath = args(0)
     val outputPath = args(1)
     val numPartitions = args(2).toInt
