@@ -28,8 +28,7 @@ object DegreeCentrality extends Serializable{
     save(in, outputPath + "/in/vertices", outputPath + "/in/edges")
     save(out, outputPath + "/out/vertices", outputPath + "/out/edges")
     save(degree, outputPath + "/all/vertices", outputPath + "/all/edges")
-
-
+    sc.stop()
   }
 
   def makeGraph[VD: ClassTag](inputPath: String, sc: SparkContext): Graph[Int, Double] = {
