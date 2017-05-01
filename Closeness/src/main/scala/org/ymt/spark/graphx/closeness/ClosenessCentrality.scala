@@ -35,7 +35,7 @@ object ClosenessCentrality extends Serializable{
 
   def run[VD: ClassTag](graph: Graph[VD, Double]): Graph[Double, Double] = {
     // val numVertices = graph.numVertices
-    Graph(ShortestPathsWeighted.runWithDist(graph, graph.vertices.map { vx => vx._1 }.collect())
+    Graph(ShortestPathsWeighted.runWithDist(graph)
       .vertices.map {
       vx => (vx._1, {
         val dx = 1.0 / vx._2.values.seq.avg
