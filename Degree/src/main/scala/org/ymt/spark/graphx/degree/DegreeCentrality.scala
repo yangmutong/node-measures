@@ -1,6 +1,6 @@
 package org.ymt.spark.graphx.degree
 
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.{HashPartitioner, SparkConf, SparkContext}
 import org.apache.spark.graphx._
 
 import scala.reflect.ClassTag
@@ -16,13 +16,10 @@ object DegreeCentrality extends Serializable{
     val numPartitions = args(2).toInt
 
     // graph loader phase
-    val graph = makeGraph(inputPath, sc)
-    val g = Graph(graph.vertices.repartition(numPartitions),
-      graph.edges.repartition(numPartitions)).partitionBy(PartitionStrategy.RandomVertexCut).cache()
-
-    val in = inDegreeCentrality(g)
-    val out = outDegreeCentrality(g)
-    val degree = degreeCentrality(g)
+    val graph = makeGraph(inputPath, sc, numPartitions)
+    val in = inDegreeCentrality(graph)
+    val out = outDegreeCentrality(graph)
+    val degree = degreeCentrality(graph)
 
     save(in, outputPath + "/in/vertices")
     save(out, outputPath + "/out/vertices")
@@ -30,9 +27,18 @@ object DegreeCentrality extends Serializable{
     sc.stop()
   }
 
-  def makeGraph[VD: ClassTag](inputPath: String, sc: SparkContext): Graph[Int, Double] = {
+  def makeGraph[VD: ClassTag](inputPath: String, sc: SparkContext, numPartitions: Int): Graph[Long, Double] = {
     val graph = GraphLoader.edgeListFile(sc, inputPath, true)
-    graph.mapEdges(v => v.attr.toDouble)
+    val edgesRepartitionRdd = graph.edges.map(
+      edge => {
+        val pid = PartitionStrategy.EdgePartition2D.getPartition(edge.srcId, edge.dstId, numPartitions)
+        (pid, (edge.srcId, edge.dstId))
+      }
+    ).partitionBy(new HashPartitioner(numPartitions)).map {
+      case (pid, (src: Long, dst: Long)) =>
+        Edge(src, dst, 1.0)
+    }
+    Graph.fromEdges(edgesRepartitionRdd, 0L)
   }
 
   def save[VD: ClassTag](vertex: VertexRDD[VD], vertexPath: String): Unit = {

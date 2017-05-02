@@ -1,9 +1,11 @@
 package org.ymt.spark.graphx.closeness
 
-import org.apache.spark.{SparkConf, SparkContext}
+import org.apache.spark.{HashPartitioner, SparkConf, SparkContext}
 import org.apache.spark.graphx._
+
 import scala.reflect.ClassTag
 import org.apache.spark.rdd.RDD
+
 import scala.language.reflectiveCalls
 import scala.language.implicitConversions
 /**
@@ -18,16 +20,23 @@ object ClosenessCentrality extends Serializable{
     val numPartitions = args(2).toInt
 
     // graph loader phase
-    val graph = makeGraph(inputPath, sc)
-    val g = Graph(graph.vertices.repartition(numPartitions),
-      graph.edges.repartition(numPartitions)).partitionBy(PartitionStrategy.RandomVertexCut).cache()
-    val result = run(g)
+    val graph = makeGraph(inputPath, sc, numPartitions).cache()
+    val result = run(graph)
     save(result, outputPath + "/vertices")
     sc.stop()
   }
-  def makeGraph[VD: ClassTag](inputPath: String, sc: SparkContext): Graph[Int, Double] = {
+  def makeGraph[VD: ClassTag](inputPath: String, sc: SparkContext, numPartitions: Int): Graph[Long, Double] = {
     val graph = GraphLoader.edgeListFile(sc, inputPath, true)
-    graph.mapEdges(v => v.attr.toDouble)
+    val edgesRepartitionRdd = graph.edges.map(
+      edge => {
+        val pid = PartitionStrategy.EdgePartition2D.getPartition(edge.srcId, edge.dstId, numPartitions)
+        (pid, (edge.srcId, edge.dstId))
+      }
+    ).partitionBy(new HashPartitioner(numPartitions)).map {
+      case (pid, (src: Long, dst: Long)) =>
+        Edge(src, dst, 1.0)
+    }
+    Graph.fromEdges(edgesRepartitionRdd, 0L)
   }
   def save[VD: ClassTag, ED: ClassTag](graph: Graph[VD, ED], vertexPath: String): Unit = {
     graph.vertices.saveAsTextFile(vertexPath)
