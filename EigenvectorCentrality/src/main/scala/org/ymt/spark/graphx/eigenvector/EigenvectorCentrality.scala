@@ -14,10 +14,11 @@ object EigenvectorCentrality extends Serializable{
     val inputPath = args(0)
     val outputPath = args(1)
     val numPartitions = args(2).toInt
+    val maxIter = args(3).toInt
 
     // graph loader phase
     val graph = makeGraph(inputPath, sc, numPartitions)
-    val result = run(graph)
+    val result = run(graph, maxIter)
 
     save(result, outputPath + "/vertices")
 
@@ -61,7 +62,7 @@ object EigenvectorCentrality extends Serializable{
     var result = graph.mapVertices((vid, attr) => 1.0 / count)
     var initialGraph: Graph[Double,Double] = result
     var condition = Double.MaxValue
-    for {i <- 1 to 20
+    for {i <- 1 to maxIter
         if condition >= count * 0.000001
     } {
       initialGraph = result
