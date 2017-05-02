@@ -3,7 +3,6 @@ package org.ymt.spark.graphx.closeness
 import org.apache.spark.{HashPartitioner, SparkConf, SparkContext}
 import org.apache.spark.graphx._
 
-import org.ymt.spark.graphx.closeness.ShortestPathsWeighted
 import scala.reflect.ClassTag
 import org.apache.spark.rdd.RDD
 
@@ -18,7 +17,8 @@ object ClosenessCentrality extends Serializable {
     val conf = new SparkConf()
     conf.setAppName("Closeness Centrality")
     conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-    conf.registerKryoClasses(Array(classOf[ShortestPathsWeighted.type], classOf[ShortestPathsWeighted.SPMap], classOf[ClosenessCentrality.type]))
+    // conf.registerKryoClasses(Array(classOf[ShortestPathsWeighted.type], classOf[ShortestPathsWeighted.SPMap], classOf[ClosenessCentrality.type]))
+    conf.registerKryoClasses(Array(ShortestPathsWeighted.getClass, classOf[ShortestPathsWeighted.SPMap], ClosenessCentrality.getClass))
     val sc = new SparkContext(conf)
     val inputPath = args(0)
     val outputPath = args(1)
