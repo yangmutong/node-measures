@@ -3,6 +3,7 @@ package org.ymt.spark.graphx.closeness
 import org.apache.spark.{HashPartitioner, SparkConf, SparkContext}
 import org.apache.spark.graphx._
 
+import org.ymt.spark.graphx.closeness.ShortestPathsWeighted
 import scala.reflect.ClassTag
 import org.apache.spark.rdd.RDD
 
@@ -12,9 +13,13 @@ import scala.language.implicitConversions
   * Created by yangmutong on 2017/4/8.
   */
 
-object ClosenessCentrality extends Serializable{
+object ClosenessCentrality extends Serializable {
   def main(args: Array[String]): Unit = {
-    val sc = new SparkContext(new SparkConf().setAppName("Closeness Centrality"))
+    val conf = new SparkConf()
+    conf.setAppName("Closeness Centrality")
+    conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+    conf.registerKryoClasses(Array(classOf[ShortestPathsWeighted.type], classOf[ShortestPathsWeighted.SPMap], classOf[ClosenessCentrality.type]))
+    val sc = new SparkContext(conf)
     val inputPath = args(0)
     val outputPath = args(1)
     val numPartitions = args(2).toInt
