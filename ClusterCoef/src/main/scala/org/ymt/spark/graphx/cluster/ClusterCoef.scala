@@ -19,19 +19,17 @@ object ClusterCoef extends Serializable{
     val numPartitions = args(2).toInt
 
     // graph loader phase
-    val graph = makeGraph(inputPath, sc)
-    val g = Graph(graph.vertices.repartition(numPartitions),
-      graph.edges.repartition(numPartitions)).partitionBy(PartitionStrategy.RandomVertexCut).cache()
-
-    val result = clusterCoef(g)
+    val graph = makeGraph(inputPath, sc, numPartitions).persist()
+    val result = clusterCoef(graph)
     save(result, outputPath + "/vertices")
 
     sc.stop()
   }
 
-  def makeGraph[VD: ClassTag](inputPath: String, sc: SparkContext): Graph[Int, Double] = {
-    val graph = GraphLoader.edgeListFile(sc, inputPath, true)
-    graph.mapEdges(v => v.attr.toDouble)
+  def makeGraph[VD: ClassTag](inputPath: String, sc: SparkContext, numPartitions: Int): Graph[Double, Double] = {
+    GraphLoader.edgeListFile(sc, inputPath, numEdgePartitions=numPartitions)
+      .partitionBy(PartitionStrategy.EdgePartition2D)
+      .mapVertices((vid, attr) => attr.toDouble).mapEdges(v => v.attr.toDouble)
   }
   def save[VD: ClassTag, ED: ClassTag](graph: Graph[VD, ED], vertexPath: String): Unit = {
     graph.vertices.saveAsTextFile(vertexPath)

@@ -30,20 +30,10 @@ object EigenvectorCentrality extends Serializable{
 
     sc.stop()
   }
-  def makeGraph[VD: ClassTag](inputPath: String, sc: SparkContext, numPartitions: Int): Graph[Long, Double] = {
-    val graph = GraphLoader.edgeListFile(sc, inputPath, true)
-    graph.unpersist()
-    val edgesRepartitionRdd = graph.edges.map(
-      edge => {
-        val pid = PartitionStrategy.EdgePartition2D.getPartition(edge.srcId, edge.dstId, numPartitions)
-        (pid, (edge.srcId, edge.dstId))
-      }
-    ).partitionBy(new HashPartitioner(numPartitions)).map {
-      case (pid, (src: Long, dst: Long)) =>
-        Edge(src, dst, 1.0)
-    }
-    edgesRepartitionRdd.unpersist()
-    Graph.fromEdges(edgesRepartitionRdd, 0L)
+  def makeGraph[VD: ClassTag](inputPath: String, sc: SparkContext, numPartitions: Int): Graph[Double, Double] = {
+    GraphLoader.edgeListFile(sc, inputPath, numEdgePartitions=numPartitions)
+      .partitionBy(PartitionStrategy.EdgePartition2D)
+      .mapVertices((vid, attr) => attr.toDouble).mapEdges(v => v.attr.toDouble)
   }
   def save[VD: ClassTag, ED: ClassTag](graph: Graph[VD, ED], vertexPath: String): Unit = {
     graph.vertices.saveAsTextFile(vertexPath)
@@ -66,9 +56,9 @@ object EigenvectorCentrality extends Serializable{
       Iterator((edgeTriplet.dstId, msg))
     }
 
-    val count = graph.vertices.count()
+    val count = graph.numVertices
     var result = graph.mapVertices((vid, attr) => 1.0 / count)
-    var initialGraph: Graph[Double,Double] = result
+    var initialGraph: Graph[Double, Double] = result
     var condition = Double.MaxValue
     @transient lazy val log = LogManager.getLogger("myLogger")
     for {i <- 0 to maxIter
@@ -76,7 +66,7 @@ object EigenvectorCentrality extends Serializable{
     } {
       initialGraph.unpersist()
       initialGraph = result
-      val tmp = Pregel(initialGraph, 0.0, 1, activeDirection = EdgeDirection.Out)(vertexProgram, sendMsg, mergeMsg)
+      val tmp = Pregel(initialGraph, 0.0, 1)(vertexProgram, sendMsg, mergeMsg)
       val s = math.sqrt(tmp.vertices.map(v => v._2 * v._2).reduce(_+_))
       val normalize = if (s == 0.0) 1.0 else s
       result.unpersist()

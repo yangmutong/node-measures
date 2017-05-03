@@ -22,7 +22,7 @@ object Louvain extends Serializable{
     val numPartitions = args(2).toInt
 
     // graph loader phase
-    val g = makeGraph(inputPath, sc, numPartitions)
+    val g = makeGraph(inputPath, sc, numPartitions).persist()
     // computation phase
     val louvainCore = new LouvainCore
     var louvainGraph = louvainCore.createLouvainGraph(g.mapEdges(v => v.attr.toLong))
@@ -56,19 +56,10 @@ object Louvain extends Serializable{
 
     sc.stop()
   }
-  def makeGraph[VD: ClassTag](inputPath: String, sc: SparkContext, numPartitions: Int): Graph[Long, Double] = {
-    val graph = GraphLoader.edgeListFile(sc, inputPath, true)
-    val edgesRepartitionRdd = graph.edges.map(
-      edge => {
-        val pid = PartitionStrategy.EdgePartition2D.getPartition(edge.srcId, edge.dstId, numPartitions)
-        (pid, (edge.srcId, edge.dstId))
-      }
-    ).partitionBy(new HashPartitioner(numPartitions)).map {
-      case (pid, (src: Long, dst: Long)) =>
-        Edge(src, dst, 1.0)
-    }
-    graph.unpersist()
-    Graph.fromEdges(edgesRepartitionRdd, 0L)
+  def makeGraph[VD: ClassTag](inputPath: String, sc: SparkContext, numPartitions: Int): Graph[Double, Double] = {
+    GraphLoader.edgeListFile(sc, inputPath, numEdgePartitions=numPartitions)
+      .partitionBy(PartitionStrategy.EdgePartition2D)
+      .mapVertices((vid, attr) => attr.toDouble).mapEdges(v => v.attr.toDouble)
   }
 
   def saveLevel(sc: SparkContext, level: Int, q: Double, graph: Graph[LouvainData, Long], outputPath: String) = {

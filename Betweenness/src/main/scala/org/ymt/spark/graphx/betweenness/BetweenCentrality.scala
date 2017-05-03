@@ -28,20 +28,10 @@ object BetweenCentrality extends Serializable{
     save(result, outputPath + "/vertices")
     sc.stop()
   }
-  def makeGraph[VD: ClassTag](inputPath: String, sc: SparkContext, numPartitions: Int): Graph[Long, Double] = {
-    val graph = GraphLoader.edgeListFile(sc, inputPath, true)
-    graph.unpersist()
-    val edgesRepartitionRdd = graph.edges.map(
-      edge => {
-        val pid = PartitionStrategy.EdgePartition2D.getPartition(edge.srcId, edge.dstId, numPartitions)
-        (pid, (edge.srcId, edge.dstId))
-      }
-    ).partitionBy(new HashPartitioner(numPartitions)).map {
-      case (pid, (src: Long, dst: Long)) =>
-        Edge(src, dst, 1.0)
-    }
-    edgesRepartitionRdd.unpersist()
-    Graph.fromEdges(edgesRepartitionRdd, 0L)
+  def makeGraph[VD: ClassTag](inputPath: String, sc: SparkContext, numPartitions: Int): Graph[Double, Double] = {
+    GraphLoader.edgeListFile(sc, inputPath, numEdgePartitions=numPartitions)
+      .partitionBy(PartitionStrategy.EdgePartition2D)
+      .mapVertices((vid, attr) => attr.toDouble).mapEdges(v => v.attr.toDouble)
   }
   def save[VD: ClassTag, ED: ClassTag](graph: Graph[VD, ED], vertexPath: String): Unit = {
     graph.vertices.saveAsTextFile(vertexPath)
