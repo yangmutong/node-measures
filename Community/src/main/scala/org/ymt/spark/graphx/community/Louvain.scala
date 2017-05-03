@@ -67,6 +67,7 @@ object Louvain extends Serializable{
       case (pid, (src: Long, dst: Long)) =>
         Edge(src, dst, 1.0)
     }
+    graph.unpersist()
     Graph.fromEdges(edgesRepartitionRdd, 0L)
   }
 

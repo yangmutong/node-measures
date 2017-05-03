@@ -23,7 +23,7 @@ object BetweenCentrality extends Serializable{
     val iter = args(3).toInt
 
     // graph loader phase
-    val graph = makeGraph(inputPath, sc, numPartitions)
+    val graph = makeGraph(inputPath, sc, numPartitions).persist()
     val result = KBetweenness.run(graph, iter)
     save(result, outputPath + "/vertices")
     sc.stop()

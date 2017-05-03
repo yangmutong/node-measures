@@ -21,7 +21,7 @@ object EigenvectorCentrality extends Serializable with Logging{
     val maxIter = args(3).toInt
 
     // graph loader phase
-    val graph = makeGraph(inputPath, sc, numPartitions).cache()
+    val graph = makeGraph(inputPath, sc, numPartitions).persist()
     val result = run(graph, maxIter)
 
     save(result, outputPath + "/vertices")
