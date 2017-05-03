@@ -70,11 +70,10 @@ object EigenvectorCentrality extends Serializable{
     var result = graph.mapVertices((vid, attr) => 1.0 / count)
     var initialGraph: Graph[Double,Double] = result
     var condition = Double.MaxValue
+    @transient lazy val log = LogManager.getLogger("myLogger")
     for {i <- 1 to maxIter
         if condition >= count * 0.000001
     } {
-      @transient lazy val log = LogManager.getLogger("myLogger")
-      log.info("Eigenvector centrality iteration " + i + " with condition " + condition)
       initialGraph.unpersist()
       initialGraph = result
       val tmp = Pregel(initialGraph, 0.0, 1, activeDirection = EdgeDirection.Out)(vertexProgram, sendMsg, mergeMsg)
@@ -85,6 +84,10 @@ object EigenvectorCentrality extends Serializable{
       condition = result.outerJoinVertices[Double, Double](initialGraph.vertices){(vid, leftAttr: Double, rightAttr: Option[Double]) => {
         math.abs(leftAttr - rightAttr.getOrElse(0.0))
       }}.vertices.map(v => v._2).reduce(_+_)
+      log.info("Eigenvector centrality iteration " + i)
+      log.info("Condition " + condition)
+      log.info("Normalize " + normalize)
+      log.info("S" + s)
     }
     result
   }
