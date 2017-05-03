@@ -1,14 +1,16 @@
 package org.ymt.spark.graphx.eigenvector
 
+import org.apache.log4j.LogManager
+
 import org.apache.spark.graphx._
 import org.apache.spark.{HashPartitioner, SparkConf, SparkContext}
-import org.apache.spark.Logging
+
 import scala.reflect.ClassTag
 /**
   * Created by yangmutong on 2017/4/10.
   */
 
-object EigenvectorCentrality extends Logging{
+object EigenvectorCentrality extends Serializable{
   def main(args: Array[String]): Unit = {
     val conf = new SparkConf()
     conf.setAppName("Eigenvector Centrality")
@@ -71,7 +73,8 @@ object EigenvectorCentrality extends Logging{
     for {i <- 1 to maxIter
         if condition >= count * 0.000001
     } {
-      logInfo("Eigenvector centrality iteration " + i + " with condition " + condition)
+      @transient lazy val log = LogManager.getLogger("myLogger")
+      log.info("Eigenvector centrality iteration " + i + " with condition " + condition)
       initialGraph.unpersist()
       initialGraph = result
       val tmp = Pregel(initialGraph, 0.0, 1, activeDirection = EdgeDirection.Out)(vertexProgram, sendMsg, mergeMsg)
