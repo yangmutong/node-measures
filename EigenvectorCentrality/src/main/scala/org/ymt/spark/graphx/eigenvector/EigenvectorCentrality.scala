@@ -8,7 +8,7 @@ import scala.reflect.ClassTag
   * Created by yangmutong on 2017/4/10.
   */
 
-object EigenvectorCentrality extends Serializable with Logging{
+object EigenvectorCentrality extends Logging{
   def main(args: Array[String]): Unit = {
     val conf = new SparkConf()
     conf.setAppName("Eigenvector Centrality")
