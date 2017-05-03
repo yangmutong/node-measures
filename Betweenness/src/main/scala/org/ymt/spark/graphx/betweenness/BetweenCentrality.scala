@@ -12,7 +12,11 @@ import scala.reflect.ClassTag
 
 object BetweenCentrality extends Serializable{
   def main(args: Array[String]): Unit = {
-    val sc = new SparkContext(new SparkConf().setAppName("Betweenness Centrality"))
+    val conf = new SparkConf()
+    conf.setAppName("Betweenness Centrality")
+    conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+    conf.registerKryoClasses(Array(BetweenCentrality.getClass, KBetweenness.getClass, ShortestPathsWeighted.getClass))
+    val sc = new SparkContext(conf)
     val inputPath = args(0)
     val outputPath = args(1)
     val numPartitions = args(2).toInt
@@ -26,6 +30,7 @@ object BetweenCentrality extends Serializable{
   }
   def makeGraph[VD: ClassTag](inputPath: String, sc: SparkContext, numPartitions: Int): Graph[Long, Double] = {
     val graph = GraphLoader.edgeListFile(sc, inputPath, true)
+    graph.unpersist()
     val edgesRepartitionRdd = graph.edges.map(
       edge => {
         val pid = PartitionStrategy.EdgePartition2D.getPartition(edge.srcId, edge.dstId, numPartitions)
@@ -35,6 +40,7 @@ object BetweenCentrality extends Serializable{
       case (pid, (src: Long, dst: Long)) =>
         Edge(src, dst, 1.0)
     }
+    edgesRepartitionRdd.unpersist()
     Graph.fromEdges(edgesRepartitionRdd, 0L)
   }
   def save[VD: ClassTag, ED: ClassTag](graph: Graph[VD, ED], vertexPath: String): Unit = {

@@ -9,8 +9,11 @@ import scala.reflect.ClassTag
   * Created by yangmutong on 2017/4/10.
   */
 object ClusterCoef extends Serializable{
-  def main(args: Array[String]): Unit = {
-    val sc = new SparkContext(new SparkConf().setAppName("Cluster Coefficient"))
+  def main(args: Array[String]): Unit = {val conf = new SparkConf()
+    conf.setAppName("Cluster Coefficient")
+    conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+    conf.registerKryoClasses(Array(ClusterCoef.getClass))
+    val sc = new SparkContext(conf)
     val inputPath = args(0)
     val outputPath = args(1)
     val numPartitions = args(2).toInt

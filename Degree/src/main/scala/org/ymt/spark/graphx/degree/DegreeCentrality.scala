@@ -10,13 +10,17 @@ import scala.reflect.ClassTag
   */
 object DegreeCentrality extends Serializable{
   def main(args: Array[String]): Unit = {
-    val sc = new SparkContext(new SparkConf().setAppName("Degree Centrality"))
+    val conf = new SparkConf()
+    conf.setAppName("Degree Centrality")
+    conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+    conf.registerKryoClasses(Array(DegreeCentrality.getClass))
+    val sc = new SparkContext(conf)
     val inputPath = args(0)
     val outputPath = args(1)
     val numPartitions = args(2).toInt
 
     // graph loader phase
-    val graph = makeGraph(inputPath, sc, numPartitions)
+    val graph = makeGraph(inputPath, sc, numPartitions).cache()
     val in = inDegreeCentrality(graph)
     val out = outDegreeCentrality(graph)
     val degree = degreeCentrality(graph)
@@ -29,6 +33,7 @@ object DegreeCentrality extends Serializable{
 
   def makeGraph[VD: ClassTag](inputPath: String, sc: SparkContext, numPartitions: Int): Graph[Long, Double] = {
     val graph = GraphLoader.edgeListFile(sc, inputPath, true)
+    graph.unpersist()
     val edgesRepartitionRdd = graph.edges.map(
       edge => {
         val pid = PartitionStrategy.EdgePartition2D.getPartition(edge.srcId, edge.dstId, numPartitions)
@@ -38,6 +43,7 @@ object DegreeCentrality extends Serializable{
       case (pid, (src: Long, dst: Long)) =>
         Edge(src, dst, 1.0)
     }
+    edgesRepartitionRdd.unpersist()
     Graph.fromEdges(edgesRepartitionRdd, 0L)
   }
 

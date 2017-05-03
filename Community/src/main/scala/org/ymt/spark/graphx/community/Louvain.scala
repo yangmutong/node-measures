@@ -1,7 +1,7 @@
 package org.ymt.spark.graphx.community
 import org.apache.spark.{HashPartitioner, SparkConf, SparkContext}
 import org.apache.spark.graphx._
-
+import org.apache.spark.Logging
 import scala.reflect.ClassTag
 
 /**
@@ -12,8 +12,11 @@ object Louvain extends Serializable{
   var qValues = Array[(Int, Double)]()
 
   def main(args: Array[String]): Unit = {
-    val sc = new SparkContext(new SparkConf().setAppName("Louvain"))
-
+    val conf = new SparkConf()
+    conf.setAppName("Louvain")
+    conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+    conf.registerKryoClasses(Array(Louvain.getClass, classOf[LouvainCore], classOf[LouvainData]))
+    val sc = new SparkContext(conf)
     val inputPath = args(0)
     val outputPath = args(1)
     val numPartitions = args(2).toInt

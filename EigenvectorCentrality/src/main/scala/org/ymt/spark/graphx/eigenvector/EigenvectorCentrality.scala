@@ -2,22 +2,26 @@ package org.ymt.spark.graphx.eigenvector
 
 import org.apache.spark.graphx._
 import org.apache.spark.{HashPartitioner, SparkConf, SparkContext}
-
+import org.apache.spark.Logging
 import scala.reflect.ClassTag
 /**
   * Created by yangmutong on 2017/4/10.
   */
 
-object EigenvectorCentrality extends Serializable{
+object EigenvectorCentrality extends Serializable with Logging{
   def main(args: Array[String]): Unit = {
-    val sc = new SparkContext(new SparkConf().setAppName("Eigenvector Centrality"))
+    val conf = new SparkConf()
+    conf.setAppName("Eigenvector Centrality")
+    conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+    conf.registerKryoClasses(Array(EigenvectorCentrality.getClass))
+    val sc = new SparkContext(conf)
     val inputPath = args(0)
     val outputPath = args(1)
     val numPartitions = args(2).toInt
     val maxIter = args(3).toInt
 
     // graph loader phase
-    val graph = makeGraph(inputPath, sc, numPartitions)
+    val graph = makeGraph(inputPath, sc, numPartitions).cache()
     val result = run(graph, maxIter)
 
     save(result, outputPath + "/vertices")
@@ -26,6 +30,7 @@ object EigenvectorCentrality extends Serializable{
   }
   def makeGraph[VD: ClassTag](inputPath: String, sc: SparkContext, numPartitions: Int): Graph[Long, Double] = {
     val graph = GraphLoader.edgeListFile(sc, inputPath, true)
+    graph.unpersist()
     val edgesRepartitionRdd = graph.edges.map(
       edge => {
         val pid = PartitionStrategy.EdgePartition2D.getPartition(edge.srcId, edge.dstId, numPartitions)
@@ -35,6 +40,7 @@ object EigenvectorCentrality extends Serializable{
       case (pid, (src: Long, dst: Long)) =>
         Edge(src, dst, 1.0)
     }
+    edgesRepartitionRdd.unpersist()
     Graph.fromEdges(edgesRepartitionRdd, 0L)
   }
   def save[VD: ClassTag, ED: ClassTag](graph: Graph[VD, ED], vertexPath: String): Unit = {
@@ -65,9 +71,12 @@ object EigenvectorCentrality extends Serializable{
     for {i <- 1 to maxIter
         if condition >= count * 0.000001
     } {
+      logInfo("Eigenvector centrality iteration " + i + " with condition " + condition)
+      initialGraph.unpersist()
       initialGraph = result
       val tmp = Pregel(initialGraph, 0.0, 1, activeDirection = EdgeDirection.Out)(vertexProgram, sendMsg, mergeMsg)
       val normalize = math.sqrt(tmp.vertices.map(v => v._2 * v._2).reduce(_+_))
+      result.unpersist()
       result = tmp.mapVertices((vid, attr) => attr / normalize)
       condition = result.outerJoinVertices[Double, Double](initialGraph.vertices){(vid, leftAttr: Double, rightAttr: Option[Double]) => {
         math.abs(leftAttr - rightAttr.getOrElse(0.0))
