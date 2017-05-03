@@ -78,7 +78,8 @@ object EigenvectorCentrality extends Serializable{
       initialGraph.unpersist()
       initialGraph = result
       val tmp = Pregel(initialGraph, 0.0, 1, activeDirection = EdgeDirection.Out)(vertexProgram, sendMsg, mergeMsg)
-      val normalize = math.sqrt(tmp.vertices.map(v => v._2 * v._2).reduce(_+_))
+      val s = math.sqrt(tmp.vertices.map(v => v._2 * v._2).reduce(_+_))
+      val normalize = if (s == 0.0) 1.0 else s
       result.unpersist()
       result = tmp.mapVertices((vid, attr) => attr / normalize)
       condition = result.outerJoinVertices[Double, Double](initialGraph.vertices){(vid, leftAttr: Double, rightAttr: Option[Double]) => {
