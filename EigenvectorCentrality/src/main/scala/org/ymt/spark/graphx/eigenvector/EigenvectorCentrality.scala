@@ -71,7 +71,7 @@ object EigenvectorCentrality extends Serializable{
     var initialGraph: Graph[Double,Double] = result
     var condition = Double.MaxValue
     @transient lazy val log = LogManager.getLogger("myLogger")
-    for {i <- 1 to maxIter
+    for {i <- 0 to maxIter
         if condition >= count * 0.000001
     } {
       initialGraph.unpersist()
@@ -87,7 +87,7 @@ object EigenvectorCentrality extends Serializable{
       log.info("Eigenvector centrality iteration " + i)
       log.info("Condition " + condition)
       log.info("Normalize " + normalize)
-      log.info("S" + s)
+      log.info("S " + s)
     }
     result
   }
