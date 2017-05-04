@@ -56,7 +56,7 @@ object EigenvectorCentrality extends Serializable{
     }
 
     val count = graph.numVertices
-    var result = graph.mapVertices((vid, attr) => 1.0 / count)
+    var result = graph.mapVertices((vid, attr) => (1 / count).toDouble)
     var initialGraph: Graph[Double, Double] = result
     var condition = Double.MaxValue
     @transient lazy val log = LogManager.getLogger("myLogger")
