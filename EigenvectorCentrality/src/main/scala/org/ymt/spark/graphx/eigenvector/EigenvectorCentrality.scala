@@ -38,10 +38,10 @@ object EigenvectorCentrality extends Serializable{
   def save[VD: ClassTag, ED: ClassTag](graph: Graph[VD, ED], vertexPath: String): Unit = {
     graph.vertices.saveAsTextFile(vertexPath)
   }
-  def run[VD](graph: Graph[VD, Double], maxIter: Int = 100): Graph[Double, Double] = {
+  def run[VD: ClassTag](graph: Graph[VD, Double], maxIter: Int = 100): Graph[Double, Double] = {
     eigenvector(graph, maxIter)
   }
-  def eigenvector[VD](graph: Graph[VD, Double], maxIter: Int): Graph[Double, Double] = {
+  def eigenvector[VD: ClassTag](graph: Graph[VD, Double], maxIter: Int): Graph[Double, Double] = {
 
     def mergeMsg(msg1: Double, msg2: Double): Double = {
       msg1 + msg2
