@@ -1,7 +1,6 @@
 package org.ymt.spark.graphx.eigenvector
 
-import org.apache.log4j.LogManager
-
+import org.apache.log4j.{Level, LogManager}
 import org.apache.spark.graphx._
 import org.apache.spark.{HashPartitioner, SparkConf, SparkContext}
 
@@ -61,6 +60,8 @@ object EigenvectorCentrality extends Serializable{
     var initialGraph: Graph[Double, Double] = result
     var condition = Double.MaxValue
     @transient lazy val log = LogManager.getLogger("myLogger")
+    log.setLevel(Level.WARN)
+
     for {i <- 0 to maxIter
         if condition >= count * 0.000001
     } {
@@ -74,10 +75,10 @@ object EigenvectorCentrality extends Serializable{
       condition = result.outerJoinVertices[Double, Double](initialGraph.vertices){(vid, leftAttr: Double, rightAttr: Option[Double]) => {
         math.abs(leftAttr - rightAttr.getOrElse(0.0))
       }}.vertices.map(v => v._2).reduce(_+_)
-      log.info("Eigenvector centrality iteration " + i)
-      log.info("Condition " + condition)
-      log.info("Normalize " + normalize)
-      log.info("S " + s)
+      log.warn("Eigenvector centrality iteration " + i)
+      log.warn("Condition " + condition)
+      log.warn("Normalize " + normalize)
+      log.warn("S " + s)
     }
     result
   }
