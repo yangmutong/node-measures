@@ -57,9 +57,10 @@ object Louvain extends Serializable{
     sc.stop()
   }
   def makeGraph[VD: ClassTag](inputPath: String, sc: SparkContext, numPartitions: Int): Graph[Double, Double] = {
-    GraphLoader.edgeListFile(sc, inputPath, numEdgePartitions=numPartitions)
-      .partitionBy(PartitionStrategy.EdgePartition2D)
-      .mapVertices((vid, attr) => attr.toDouble).mapEdges(v => v.attr.toDouble)
+    GraphLoader.edgeListFile(sc, inputPath).unpersist()
+      .partitionBy(PartitionStrategy.EdgePartition2D, numPartitions).unpersist()
+      .mapVertices((vid, attr) => attr.toDouble).unpersist()
+      .mapEdges(v => v.attr.toDouble)
   }
 
   def saveLevel(sc: SparkContext, level: Int, q: Double, graph: Graph[LouvainData, Long], outputPath: String) = {

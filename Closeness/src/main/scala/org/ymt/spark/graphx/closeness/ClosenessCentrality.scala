@@ -25,16 +25,17 @@ object ClosenessCentrality extends Serializable {
     val numPartitions = args(2).toInt
 
     // graph loader phase
-    val graph = makeGraph(inputPath, sc, numPartitions).cache()
+    val graph = makeGraph(inputPath, sc, numPartitions).persist()
     // val result = run(graph)
     // val result = sc.parallelize(graph.vertices.map(_._1).collect().map(id => shortestPathLength(graph, id)))
     // save(result, outputPath + "/vertices")
     sc.stop()
   }
   def makeGraph[VD: ClassTag](inputPath: String, sc: SparkContext, numPartitions: Int): Graph[Double, Double] = {
-    GraphLoader.edgeListFile(sc, inputPath, numEdgePartitions=numPartitions)
-      .partitionBy(PartitionStrategy.EdgePartition2D)
-      .mapVertices((vid, attr) => attr.toDouble).mapEdges(v => v.attr.toDouble)
+    GraphLoader.edgeListFile(sc, inputPath).unpersist()
+      .partitionBy(PartitionStrategy.EdgePartition2D, numPartitions).unpersist()
+      .mapVertices((vid, attr) => attr.toDouble).unpersist()
+      .mapEdges(v => v.attr.toDouble)
   }
   def save(vertex: RDD[(Long, Double)], vertexPath: String): Unit = {
     vertex.saveAsTextFile(vertexPath)
