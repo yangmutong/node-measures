@@ -26,9 +26,9 @@ object ClosenessCentrality extends Serializable {
 
     // graph loader phase
     val graph = makeGraph(inputPath, sc, numPartitions).persist()
-    // val result = run(graph)
+    val result = run(graph)
     // val result = sc.parallelize(graph.vertices.map(_._1).collect().map(id => shortestPathLength(graph, id)))
-    // save(result, outputPath + "/vertices")
+    save(result, outputPath + "/vertices")
     sc.stop()
   }
 
@@ -38,8 +38,8 @@ object ClosenessCentrality extends Serializable {
       .mapVertices((vid, attr) => attr.toDouble).unpersist()
       .mapEdges(v => v.attr.toDouble)
   }
-  def save(vertex: RDD[(Long, Double)], vertexPath: String): Unit = {
-    vertex.saveAsTextFile(vertexPath)
+  def save[VD: ClassTag, ED: ClassTag](graph: Graph[VD, ED], vertexPath: String): Unit = {
+    graph.vertices.saveAsTextFile(vertexPath)
   }
 
   def run[VD: ClassTag](graph: Graph[VD, Double]): Graph[Double, Double] = {
@@ -52,21 +52,6 @@ object ClosenessCentrality extends Serializable {
       })
     }: RDD[(VertexId, Double)], graph.edges)
      // 性能太差
-//    val verticesIds = graph.vertices.map(_._1).collect()
-//    val length = verticesIds.length
-//    val range = 500
-//    val iter = length / range
-//    var i = 0
-//    var graphArr: Array[VertexRDD[ShortestPaths.SPMap]] = new Array(iter + 1)
-//    for (i <- 0 to iter - 1) {
-//      // val tmp = ShortestPathsWeighted.run(graph, verticesIds.slice(i * range, i * range + range))
-//      val tmp = ShortestPaths.run(graph, verticesIds.slice(i * range, i * range + range))
-//      tmp.edges.unpersist()
-//      graphArr(i) = tmp.vertices
-//    }
-//    // graphArr(iter) = ShortestPathsWeighted.run(graph, verticesIds.slice(iter * range, length)).vertices
-//    graphArr(iter) = ShortestPaths.run(graph, verticesIds.slice(iter * range, length)).vertices
-//
   }
   def average[T](ts: Iterable[T])(implicit num: Numeric[T]) = {
     num.toDouble(ts.sum) / ts.size
