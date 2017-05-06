@@ -27,7 +27,7 @@ object ClusterCoef extends Serializable{
   }
 
   def makeGraph[VD: ClassTag](inputPath: String, sc: SparkContext, numPartitions: Int): Graph[Double, Double] = {
-    GraphLoader.edgeListFile(sc, inputPath, numEdgePartitions=numPartitions).unpersist()
+    GraphLoader.edgeListFile(sc, inputPath, true, numEdgePartitions=numPartitions).unpersist()
       .partitionBy(PartitionStrategy.EdgePartition2D).unpersist()
       .mapVertices((vid, attr) => attr.toDouble).unpersist()
       .mapEdges(v => v.attr.toDouble)
