@@ -31,9 +31,6 @@ object DegreeCentrality extends Serializable{
     sc.stop()
   }
 
-
-
-
   def makeGraph[VD: ClassTag](inputPath: String, sc: SparkContext, numPartitions: Int): Graph[Double, Double] = {
     GraphLoader.edgeListFile(sc, inputPath, canonicalOrientation=true, numEdgePartitions=numPartitions).unpersist()
       .partitionBy(PartitionStrategy.EdgePartition2D).unpersist()

@@ -16,8 +16,6 @@ import scala.reflect.ClassTag
 
 class LouvainCore extends Serializable {
 
-
-
   /**
     * Generates a new graph of type Graph[VertexState,Long] based on an input graph of type.
     * Graph[VD,Long].  The resulting graph can be used for louvain computation.
