@@ -3,6 +3,7 @@ package org.ymt.spark.graphx.community
 /**
   * Created by yangmutong on 2017/4/18.
   */
+import org.apache.log4j.{Level, LogManager}
 import org.apache.spark.{Logging, SparkContext}
 import org.apache.spark.SparkContext._
 import org.apache.spark.graphx._
@@ -13,7 +14,8 @@ import scala.reflect.ClassTag
 
 
 
-class LouvainCore extends Logging with Serializable {
+class LouvainCore extends Serializable {
+
 
 
   /**
@@ -53,12 +55,14 @@ class LouvainCore extends Logging with Serializable {
     */
   def louvain(sc: SparkContext, graph: Graph[LouvainData, Long], minProgress: Int = 1, progressCounter: Int = 1): (Double, Graph[LouvainData, Long], Int) = {
     var louvainGraph = graph.cache()
+    @transient lazy val log = LogManager.getRootLogger
+    log.setLevel(Level.WARN)
     val graphWeight = louvainGraph.vertices.map(louvainVertex => {
       val (vertexId, louvainData) = louvainVertex
       louvainData.internalWeight + louvainData.nodeWeight
     }).reduce(_ + _)
     val totalGraphWeight = sc.broadcast(graphWeight)
-    println("totalEdgeWeight: " + totalGraphWeight.value)
+    log.warn("totalEdgeWeight: " + totalGraphWeight.value)
 
     // gather community information from each vertex's local neighborhood
     //var communityRDD = louvainGraph.mapReduceTriplets(sendCommunityData, mergeCommunityMessages)
@@ -124,14 +128,14 @@ class LouvainCore extends Logging with Serializable {
       if (even) updated = 0
       updated = updated + louvainGraph.vertices.filter(_._2.changed).count
       if (!even) {
-        println("  # vertices moved: " + java.text.NumberFormat.getInstance().format(updated))
+        log.warn("  # vertices moved: " + java.text.NumberFormat.getInstance().format(updated))
         if (updated >= updatedLastPhase - minProgress) stop += 1
         updatedLastPhase = updated
       }
 
 
     } while (stop <= progressCounter && (even || (updated > 0 && count < maxIter)))
-    println("\nCompleted in " + count + " cycles")
+    log.warn("\nCompleted in " + count + " cycles")
 
 
     // Use each vertex's neighboring community data to calculate the global modularity of the graph
@@ -199,10 +203,11 @@ class LouvainCore extends Logging with Serializable {
     * Returns a new set of vertices with the updated vertex state.
     */
   private def louvainVertJoin(louvainGraph: Graph[LouvainData, Long], msgRDD: VertexRDD[Map[(Long, Long), Long]], totalEdgeWeight: Broadcast[Long], even: Boolean) = {
+    @transient lazy val log = LogManager.getRootLogger
     louvainGraph.vertices.innerJoin(msgRDD)((vid, louvainData, communityMessages) => {
       var bestCommunity = louvainData.community
       val startingCommunityId = bestCommunity
-      var maxDeltaQ = BigDecimal(0.0);
+      var maxDeltaQ = BigDecimal(0.0)
       var bestSigmaTot = 0L
       communityMessages.foreach({ case ((communityId, sigmaTotal), communityEdgeWeight) =>
         val deltaQ = q(startingCommunityId, communityId, sigmaTotal, communityEdgeWeight, louvainData.nodeWeight, louvainData.internalWeight, totalEdgeWeight.value)
@@ -222,7 +227,7 @@ class LouvainCore extends Logging with Serializable {
         louvainData.changed = false
       }
       if (louvainData == null)
-        println("vdata is null: " + vid)
+        log.warn("vdata is null: " + vid)
       louvainData
     })
   }
@@ -242,7 +247,6 @@ class LouvainCore extends Logging with Serializable {
     var deltaQ = BigDecimal(0.0)
     if (!(isCurrentCommunity && sigma_tot.equals(BigDecimal.valueOf(0.0)))) {
       deltaQ = k_i_in - (k_i * sigma_tot / M)
-      //println(s"      $deltaQ = $k_i_in - ( $k_i * $sigma_tot / $M")
     }
     deltaQ
   }
@@ -318,20 +322,6 @@ class LouvainCore extends Logging with Serializable {
     louvainGraph
 
 
-  }
-
-
-  // debug printing
-  private def printlouvain(graph: Graph[LouvainData, Long]) = {
-    print("\ncommunity label snapshot\n(vid,community,sigmaTot)\n")
-    graph.vertices.mapValues((vid, vdata) => (vdata.community, vdata.communitySigmaTot)).collect().foreach(f => println(" " + f))
-  }
-
-
-  // debug printing
-  private def printedgetriplets(graph: Graph[LouvainData, Long]) = {
-    print("\ncommunity label snapshot FROM TRIPLETS\n(vid,community,sigmaTot)\n")
-    graph.triplets.flatMap(e => Iterator((e.srcId, e.srcAttr.community, e.srcAttr.communitySigmaTot), (e.dstId, e.dstAttr.community, e.dstAttr.communitySigmaTot))).collect().foreach(f => println(" " + f))
   }
 
 
