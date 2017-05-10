@@ -54,7 +54,6 @@ class LouvainCore extends Serializable {
   def louvain(sc: SparkContext, graph: Graph[LouvainData, Long], minProgress: Int = 1, progressCounter: Int = 1): (Double, Graph[LouvainData, Long], Int) = {
     var louvainGraph = graph.cache()
     @transient lazy val log = LogManager.getRootLogger
-    log.setLevel(Level.WARN)
     val graphWeight = louvainGraph.vertices.map(louvainVertex => {
       val (vertexId, louvainData) = louvainVertex
       louvainData.internalWeight + louvainData.nodeWeight
