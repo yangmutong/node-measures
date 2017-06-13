@@ -14,6 +14,9 @@ import scala.language.implicitConversions
   */
 
 object ClosenessCentrality extends Serializable {
+  /**
+    * @param args
+    */
   def main(args: Array[String]): Unit = {
     val conf = new SparkConf()
     conf.setAppName("Closeness Centrality")

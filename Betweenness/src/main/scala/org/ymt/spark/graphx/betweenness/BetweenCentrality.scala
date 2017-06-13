@@ -11,10 +11,16 @@ import org.apache.spark.graphx._
 import scala.reflect.ClassTag
 
 object BetweenCentrality extends Serializable{
+  /**
+    * @author Yang Mutong
+    * @param args received from command line
+    * @return void
+    */
   def main(args: Array[String]): Unit = {
     val conf = new SparkConf()
     conf.setAppName("Betweenness Centrality")
     conf.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+    // change Serialize
     conf.registerKryoClasses(Array(BetweenCentrality.getClass, KBetweenness.getClass, ShortestPathsWeighted.getClass))
     val sc = new SparkContext(conf)
     val inputPath = args(0)
@@ -29,16 +35,35 @@ object BetweenCentrality extends Serializable{
     sc.stop()
   }
 
+  /**
+    * @param inputPath input path, HDFS url will be better
+    * @param sc SparkContext
+    * @param numPartitions number of partitions, square numbers will be better to compute
+    * @return Graph[VD, ED]
+    */
   def makeGraph[VD: ClassTag](inputPath: String, sc: SparkContext, numPartitions: Int): Graph[Double, Double] = {
     GraphLoader.edgeListFile(sc, inputPath, canonicalOrientation=true, numEdgePartitions=numPartitions).unpersist()
       .partitionBy(PartitionStrategy.EdgePartition2D).unpersist()
       .mapVertices((vid, attr) => attr.toDouble).unpersist()
       .mapEdges(v => v.attr.toDouble)
   }
+
+  /**
+    * @param graph
+    * @param vertexPath
+    * @tparam VD
+    * @tparam ED
+    */
   def save[VD: ClassTag, ED: ClassTag](graph: Graph[VD, ED], vertexPath: String): Unit = {
     graph.vertices.saveAsTextFile(vertexPath)
   }
 
+  /**
+    * @deprecated this one is deprecated
+    * @param graph input graph
+    * @tparam VD
+    * @return Graph[List[VertexId], Double]
+    */
   def reachableNodes[VD](graph: Graph[VD, Double]): Graph[List[VertexId], Double] = {
     val reachGraph = graph.mapVertices((vid, _) => List[VertexId](vid))
     val initialMessage = List[VertexId]()
